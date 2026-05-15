@@ -1,0 +1,25 @@
+# Cole em .github/dependabot.yml
+# Dependabot abre PRs automáticos para patches de segurança semanalmente
+
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "jeanamaralsilva23"  # ajuste para seu usuário GitHub
+    labels:
+      - "dependencies"
+      - "security"
+    ignore:
+      # Ignore major version bumps — review manually
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "chore"
+      include: "scope"

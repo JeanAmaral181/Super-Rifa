@@ -1,0 +1,46 @@
+# Merge com o .gitignore existente
+# Foco em arquivos de segurança que NÃO devem ir ao repositório
+
+# ── Ambientes — NUNCA commitar ────────────────────────────────────────────────
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+.env.backup
+*.env
+
+# ── Chaves e certificados ─────────────────────────────────────────────────────
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+id_rsa
+id_ed25519
+*.keystore
+
+# ── Segredos de serviços ──────────────────────────────────────────────────────
+service-account*.json
+*-credentials.json
+credentials.json
+secrets.json
+.secrets/
+secrets/
+
+# ── Configurações de deploy com credenciais ───────────────────────────────────
+ecosystem.config.js
+.vercelrc
+vercel.json          # se contiver env vars
+
+# ── Relatórios de segurança (podem conter info sensível) ──────────────────────
+*.sarif
+security-report*.json
+audit-report*.json
+
+# ── Ferramentas de pentest / análise ─────────────────────────────────────────
+.gitleaks.toml       # pode conter chaves de allowlist
+burp-state.bckp
+sqlmap-output/
