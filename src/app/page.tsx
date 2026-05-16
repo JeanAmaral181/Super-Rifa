@@ -77,6 +77,8 @@ export default function Home() {
   const [purchases, setPurchases] = useState<SavedPurchase[]>([])
 
   const toastRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const backoffRef = useRef(30_000) // ms — reset to 30s on success, doubles on 429
 
   function showToast(message: string, type: Toast['type'] = 'info') {
     setToast({ message, type })
@@ -87,21 +89,47 @@ export default function Home() {
   async function fetchNumbers() {
     try {
       const res = await fetch('/api/numbers')
-      if (!res.ok) return
+      if (res.status === 429) {
+        // Dobra o intervalo (máx 5 min) para dar tempo à janela de rate limit (60s) expirar.
+        // Com backoff ≥ 60s a próxima tentativa SEMPRE encontra o contador zerado.
+        backoffRef.current = Math.min(backoffRef.current * 2, 5 * 60_000)
+        console.warn(`[numbers-fetch] 429 — próximo retry em ${backoffRef.current / 1000}s`)
+        return // mantém o último estado válido conhecido
+      }
+      if (!res.ok) {
+        console.warn(`[numbers-fetch] erro HTTP ${res.status}`)
+        return // mantém o último estado válido conhecido
+      }
+      backoffRef.current = 30_000 // sucesso: reset ao intervalo normal
       const data = await res.json()
       setTaken(data.taken)
       setStats(data.stats)
-    } catch {
-      // silent on network errors
+    } catch (err) {
+      console.warn('[numbers-fetch] falha de rede', err)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchNumbers()
-    const interval = setInterval(fetchNumbers, 30000)
-    return () => clearInterval(interval)
+    let active = true
+
+    // setTimeout recursivo garante: (1) uma única chamada pendente por vez,
+    // (2) o próximo agendamento usa o backoffRef.current atualizado pelo fetch anterior,
+    // (3) cleanup no unmount cancela qualquer retry pendente.
+    async function poll() {
+      await fetchNumbers()
+      if (active) {
+        pollingRef.current = setTimeout(poll, backoffRef.current)
+      }
+    }
+
+    poll()
+
+    return () => {
+      active = false
+      if (pollingRef.current) clearTimeout(pollingRef.current)
+    }
   }, [])
 
   // Recupera PIX pendente do localStorage ao carregar a página
