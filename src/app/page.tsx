@@ -57,7 +57,7 @@ const PROJECTS = [
       'Mutex distribuído (Redis NX) para reservas concorrentes',
     ],
     github: 'https://github.com/JeanAmaral181/Super-Rifa',
-    live: null,
+    live: 'https://super-rifa.vercel.app',
   },
 ]
 
