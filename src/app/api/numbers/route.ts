@@ -52,7 +52,9 @@ export async function GET(request: NextRequest) {
   const publicTaken = Object.fromEntries(
     Object.entries(active).map(([k, v]) => [k, { status: v.status }])
   )
-  return Response.json({ taken: publicTaken, stats })
+  return Response.json({ taken: publicTaken, stats }, {
+    headers: { 'Cache-Control': 'no-store' },
+  })
 }
 
 export async function POST(request: NextRequest) {
