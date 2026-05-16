@@ -46,8 +46,8 @@ const PROJECTS = [
   {
     name: 'Super Rifa',
     year: '2026',
-    status: 'production',
-    desc: 'Plataforma full-stack de rifas com integração PIX seguindo a especificação EMV do BACEN, estado distribuído via Redis com mutex lock, autenticação JWT e rate limiting por IP.',
+    status: 'demo',
+    desc: 'Plataforma full-stack de rifas com geração de QR Code PIX via especificação EMV do BACEN (modo demo), estado distribuído via Redis com mutex lock, autenticação JWT e rate limiting por IP.',
     tech: ['Next.js 16', 'TypeScript', 'Upstash Redis', 'JWT', 'bcrypt', 'Zod', 'PIX/EMV', 'Vercel'],
     security: [
       'bcrypt com delay mínimo de 500 ms — defesa contra timing attack',
@@ -56,8 +56,8 @@ const PROJECTS = [
       'Validação Zod em todas as fronteiras de API',
       'Mutex distribuído (Redis NX) para reservas concorrentes',
     ],
-    github: 'https://github.com/JeanAmaral181/rifa-raiza',
-    live: 'https://rifa-raiza.vercel.app',
+    github: 'https://github.com/JeanAmaral181',
+    live: null,
   },
 ]
 
@@ -230,7 +230,8 @@ export default function Portfolio() {
               </div>
               <span style={{
                 padding: '0.18rem 0.6rem', borderRadius: '3px',
-                background: 'rgba(0,255,65,0.08)', color: GREEN,
+                background: p.status === 'demo' ? 'rgba(0,212,255,0.08)' : 'rgba(0,255,65,0.08)',
+                color: p.status === 'demo' ? CYAN : GREEN,
                 fontSize: '0.68rem', fontFamily: 'monospace',
               }}>
                 ● {p.status}
@@ -266,15 +267,21 @@ export default function Portfolio() {
             </div>
 
             {/* Links */}
-            <div style={{ display: 'flex', gap: '1.2rem' }}>
+            <div style={{ display: 'flex', gap: '1.2rem', alignItems: 'center' }}>
               <a href={p.github} target="_blank" rel="noopener noreferrer"
                 style={{ fontSize: '0.82rem', color: GREEN, textDecoration: 'none', fontWeight: 700 }}>
                 GitHub ↗
               </a>
-              <a href={p.live} target="_blank" rel="noopener noreferrer"
-                style={{ fontSize: '0.82rem', color: '#484858', textDecoration: 'none' }}>
-                Live demo ↗
-              </a>
+              {p.live ? (
+                <a href={p.live} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: '0.82rem', color: '#484858', textDecoration: 'none' }}>
+                  Live demo ↗
+                </a>
+              ) : (
+                <span style={{ fontSize: '0.76rem', color: '#303040', fontFamily: 'monospace' }}>
+                  demo mode
+                </span>
+              )}
             </div>
           </div>
         ))}

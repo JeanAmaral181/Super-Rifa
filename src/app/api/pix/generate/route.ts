@@ -5,6 +5,10 @@ import { generatePixEMV } from '@/lib/pix.server'
 import { getNumbers, PRICE_PER_NUMBER } from '@/lib/db'
 import { checkRateLimit, getIP } from '@/lib/rate-limit'
 
+// Portfólio demonstrativo — nenhuma chave PIX real está configurada.
+// A geração de QR/EMV mostra a arquitetura completa, mas nenhum pagamento é processado.
+const DEMO_MODE = !process.env.PIX_KEY || process.env.PIX_KEY === 'demo'
+
 const schema = z.object({
   txid: z.string().min(1).max(50).regex(/^[A-Za-z0-9-]+$/, 'txid inválido'),
   buyerName: z.string().min(2).max(100).trim(),
@@ -42,11 +46,14 @@ export async function POST(request: NextRequest) {
   }
 
   const amount = reserved.length * PRICE_PER_NUMBER
-  const description = `Rifa ${txid} - ${buyerName}`.substring(0, 72)
+  const description = `Demo ${txid} - ${buyerName}`.substring(0, 72)
+
+  // Em modo demo, gera EMV/QR válido tecnicamente mas com chave fictícia não registrada
+  const pixKey = DEMO_MODE ? '00000000000' : process.env.PIX_KEY!
 
   const pixString = generatePixEMV({
-    key: process.env.PIX_KEY!,
-    merchantName: process.env.PIX_MERCHANT_NAME || 'Raiza Gabriela',
+    key: pixKey,
+    merchantName: process.env.PIX_MERCHANT_NAME || 'Jean Amaral',
     merchantCity: process.env.PIX_MERCHANT_CITY || 'Sao Paulo',
     amount,
     txid,
@@ -55,5 +62,13 @@ export async function POST(request: NextRequest) {
 
   const qrCode = await QRCode.toDataURL(pixString, { width: 300, margin: 2 })
 
-  return Response.json({ pixString, qrCode, amount })
+  return Response.json({
+    pixString,
+    qrCode,
+    amount,
+    demo: DEMO_MODE,
+    ...(DEMO_MODE && {
+      demoNote: 'Demonstração técnica — chave PIX fictícia, nenhum pagamento é processado.',
+    }),
+  })
 }

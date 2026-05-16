@@ -1,5 +1,5 @@
 /**
- * Adiciona 500 números aleatórios como pagos pela família da Raiza e os exclui do sorteio.
+ * Adiciona 500 números aleatórios como pagos (família/organizadores, excluídos do sorteio).
  *
  * Uso: npx tsx scripts/add-family.ts
  *
@@ -114,7 +114,7 @@ async function main() {
     for (const n of chosen) {
       fresh[String(n)] = {
         status: 'paid',
-        name: 'Família da Raiza',
+        name: 'Organizadores',
         phone: '11000000000',
         ts,
         txid,
