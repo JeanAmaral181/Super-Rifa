@@ -44,7 +44,7 @@ const SECURITY = [
 
 const PROJECTS = [
   {
-    name: 'rifa-raiza',
+    name: 'Super Rifa',
     year: '2026',
     status: 'production',
     desc: 'Plataforma full-stack de rifas com integração PIX seguindo a especificação EMV do BACEN, estado distribuído via Redis com mutex lock, autenticação JWT e rate limiting por IP.',
