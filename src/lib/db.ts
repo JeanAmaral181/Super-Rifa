@@ -39,7 +39,13 @@ export async function withLock<T>(fn: () => Promise<T>): Promise<T> {
 export async function getNumbers(): Promise<NumbersRecord> {
   const raw = await redis.get<string>(REDIS_KEY)
   if (!raw) return {}
-  return typeof raw === 'string' ? JSON.parse(raw) : (raw as NumbersRecord)
+  if (typeof raw !== 'string') return raw as NumbersRecord
+  try {
+    return JSON.parse(raw)
+  } catch {
+    console.error('[db] getNumbers: JSON inválido no Redis — retornando vazio')
+    return {}
+  }
 }
 
 export async function saveNumbers(data: NumbersRecord): Promise<void> {
@@ -150,8 +156,11 @@ export function computeStats(data: NumbersRecord) {
   let revenue = 0
   for (const entry of Object.values(data)) {
     if (entry.status === 'reserved') {
-      reserved++
-      if (now - entry.ts > EXPIRE_MS) expired++
+      if (now - entry.ts > EXPIRE_MS) {
+        expired++
+      } else {
+        reserved++
+      }
     } else if (entry.status === 'paid') {
       paid++
       revenue += PRICE_PER_NUMBER

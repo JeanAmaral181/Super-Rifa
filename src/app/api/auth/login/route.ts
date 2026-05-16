@@ -42,9 +42,22 @@ export async function POST(request: NextRequest) {
   }
 
   const { password } = result.data
-  const hash = process.env.ADMIN_PASSWORD_HASH!
+  const hash = process.env.ADMIN_PASSWORD_HASH
 
-  const valid = await bcrypt.compare(password, hash)
+  if (!hash) {
+    console.error('[login] ADMIN_PASSWORD_HASH não configurado')
+    await delay(500 - (Date.now() - start))
+    return Response.json({ error: 'Servidor mal configurado' }, { status: 500 })
+  }
+
+  let valid: boolean
+  try {
+    valid = await bcrypt.compare(password, hash)
+  } catch {
+    console.error('[login] bcrypt.compare falhou — hash inválido')
+    await delay(500 - (Date.now() - start))
+    return Response.json({ error: 'Servidor mal configurado' }, { status: 500 })
+  }
 
   // Always wait at least 500ms total to prevent timing attacks
   await delay(500 - (Date.now() - start))

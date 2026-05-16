@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
     .map(([number, entry]) => ({
       number,
       status: entry.status,
-      name: entry.name,
     }))
     .sort((a, b) => Number(a.number) - Number(b.number))
 

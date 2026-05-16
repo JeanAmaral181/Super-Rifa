@@ -15,6 +15,11 @@ export async function checkRateLimit(
 }
 
 export function getIP(request: Request): string {
+  // x-real-ip é injetado pelo Vercel a partir da conexão TCP — não forjável pelo cliente
+  const realIp = request.headers.get('x-real-ip')
+  if (realIp) return realIp.trim()
+  // Vercel acrescenta o IP real ao FINAL do X-Forwarded-For, nunca ao início
   const forwarded = request.headers.get('x-forwarded-for')
-  return forwarded ? forwarded.split(',')[0].trim() : 'unknown'
+  if (forwarded) return forwarded.split(',').at(-1)!.trim()
+  return 'unknown'
 }

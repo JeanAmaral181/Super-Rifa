@@ -70,7 +70,7 @@ export default function Home() {
 
   const [verifyQuery, setVerifyQuery] = useState('')
   const [verifyResults, setVerifyResults] = useState<
-    Array<{ number: string; status: string; name: string }>
+    Array<{ number: string; status: string }>
   >([])
   const [verifying, setVerifying] = useState(false)
 
@@ -882,9 +882,7 @@ export default function Home() {
                   className="flex justify-between items-center rounded-xl px-4 py-3 text-sm"
                   style={{ background: 'rgba(255,255,255,0.05)' }}
                 >
-                  <span className="text-white">
-                    <span className="font-bold">#{r.number}</span> — {r.name}
-                  </span>
+                  <span className="text-white font-bold">#{r.number}</span>
                   <span
                     className="font-bold text-xs px-2 py-1 rounded-full"
                     style={{
