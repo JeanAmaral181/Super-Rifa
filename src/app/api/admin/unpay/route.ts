@@ -5,6 +5,8 @@ import { requireAdmin } from '@/lib/auth.server'
 
 const schema = z.object({
   txid: z.string().min(1).max(50),
+  /** true = apaga entradas paid também; false (padrão) = só reservas */
+  force: z.boolean().optional().default(false),
 })
 
 const EXCLUDED_KEY = 'rifa:draw:excluded'
@@ -22,7 +24,7 @@ export async function DELETE(request: NextRequest) {
   if (!parsed.success) {
     return Response.json({ error: parsed.error.issues[0].message }, { status: 400 })
   }
-  const { txid } = parsed.data
+  const { txid, force } = parsed.data
 
   try {
     return await withLock(async () => {
@@ -30,7 +32,10 @@ export async function DELETE(request: NextRequest) {
       let count = 0
 
       for (const key of Object.keys(data)) {
-        if (data[key].txid === txid) {
+        const entry = data[key]
+        if (entry.txid === txid) {
+          // Sem force=true, só apaga reservas pendentes — entradas paid exigem confirmação explícita
+          if (entry.status === 'paid' && !force) continue
           delete data[key]
           count++
         }

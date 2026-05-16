@@ -206,12 +206,15 @@ export default function AdminPage() {
     }
   }
 
-  async function handleUnpay(txid: string, count: number) {
-    if (!confirm(`Desfazer pagamento de ${count} número(s)? Os números serão liberados novamente.`)) return
+  async function handleUnpay(txid: string, count: number, status: 'reserved' | 'paid') {
+    const msg = status === 'paid'
+      ? `⚠️ Isso vai APAGAR permanentemente ${count} número(s) PAGOS. Tem certeza?`
+      : `Liberar reserva de ${count} número(s)? Os números voltarão a ficar disponíveis.`
+    if (!confirm(msg)) return
     const res = await fetch('/api/admin/unpay', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ txid }),
+      body: JSON.stringify({ txid, force: status === 'paid' }),
     })
     if (res.ok) {
       const d = await res.json()
@@ -763,7 +766,7 @@ export default function AdminPage() {
                                 {isExcluded ? '👨‍👩‍👧' : '🎟'}
                               </button>
                               <button
-                                onClick={() => handleUnpay(entry.txid, entry.numbers.length)}
+                                onClick={() => handleUnpay(entry.txid, entry.numbers.length, entry.status)}
                                 className="px-2.5 py-1 rounded-lg text-xs font-bold"
                                 style={{
                                   background: 'rgba(255,23,68,0.15)',
