@@ -29,7 +29,7 @@ const reserveSchema = z.object({
 
 export async function GET(request: NextRequest) {
   const ip = getIP(request)
-  const allowed = await checkRateLimit(ip, 'numbers-get', 20, 60)
+  const allowed = await checkRateLimit(ip, 'numbers-get', 60, 60)
   if (!allowed) {
     return Response.json({ error: 'Muitas requisições. Tente em breve.' }, { status: 429 })
   }
