@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Super Rifa
 
-## Getting Started
+Plataforma full-stack de rifas com geração de QR Code PIX via especificação EMV do BACEN (modo demo), estado distribuído via Redis com mutex lock, autenticação JWT e rate limiting por IP.
 
-First, run the development server:
+**Demo:** [super-rifa.vercel.app](https://super-rifa.vercel.app)
+
+## Stack
+
+- **Next.js 16** — App Router, Server Components, API Routes
+- **TypeScript** — tipagem estrita em todas as camadas
+- **Upstash Redis** — estado distribuído + mutex lock (NX)
+- **JWT + bcrypt** — autenticação admin com cookie HttpOnly
+- **Zod** — validação de schema em todas as fronteiras de API
+- **PIX/EMV** — geração de payload seguindo a especificação BACEN
+- **Vercel** — deploy contínuo
+
+## Segurança
+
+- `bcrypt` com delay mínimo de 500 ms — defesa contra timing attack
+- Rate limiting por IP no Redis, janela configurável por rota
+- Cookie `HttpOnly + SameSite=Strict` para o token JWT admin
+- Validação Zod em todas as entradas de API
+- Mutex distribuído (Redis `SET NX`) para reservas concorrentes
+- HMAC SHA-256 com `timingSafeEqual` no webhook PIX
+- Idempotência de eventos via Redis (TTL 7 dias)
+
+## Modo Demo
+
+A integração PIX está em modo demonstrativo — o payload EMV é gerado corretamente seguindo a especificação do BACEN, mas com uma chave fictícia. Nenhum pagamento real é processado.
+
+## Rodando localmente
 
 ```bash
+npm install
+cp .env.example .env   # configure as variáveis
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Variáveis de ambiente
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variável | Descrição |
+|---|---|
+| `UPSTASH_REDIS_REST_URL` | URL do Redis (Upstash) |
+| `UPSTASH_REDIS_REST_TOKEN` | Token do Redis (Upstash) |
+| `ADMIN_PASSWORD_HASH` | Hash bcrypt da senha admin |
+| `JWT_SECRET` | Segredo para assinar o JWT |
+| `PIX_KEY` | Chave PIX do recebedor (deixe `demo` para modo demonstrativo) |
+| `PIX_MERCHANT_NAME` | Nome do recebedor (máx. 25 chars) |
+| `PIX_MERCHANT_CITY` | Cidade do recebedor (máx. 15 chars) |
 
-## Learn More
+## Painel Admin
 
-To learn more about Next.js, take a look at the following resources:
+Acesse `/admin` com a senha configurada em `ADMIN_PASSWORD_HASH`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Funcionalidades: confirmar pagamentos, liberar reservas expiradas, adicionar compras manuais e realizar sorteio com commit-reveal auditável.
