@@ -51,10 +51,11 @@ const PRIZES = [
 const CONFETTI_COLORS = ['#FFD700', '#FFA500', '#FF6B6B', '#69f0ae', '#4FC3F7', '#CE93D8']
 
 export default function Home() {
-  const [taken, setTaken] = useState<TakenNumbers>({})
+  const [taken, setTaken] = useState<TakenNumbers | null>(null)
   const [selected, setSelected] = useState<Set<number>>(new Set())
-  const [stats, setStats] = useState<Stats>({ available: TOTAL, reserved: 0, paid: 0 })
+  const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(false)
   const [toast, setToast] = useState<Toast | null>(null)
 
   const [buyModal, setBuyModal] = useState(false)
@@ -94,21 +95,34 @@ export default function Home() {
         // Com backoff ≥ 60s a próxima tentativa SEMPRE encontra o contador zerado.
         backoffRef.current = Math.min(backoffRef.current * 2, 5 * 60_000)
         console.warn(`[numbers-fetch] 429 — próximo retry em ${backoffRef.current / 1000}s`)
-        return // mantém o último estado válido conhecido
+        setFetchError(true)
+        setLoading(false)
+        return
       }
       if (!res.ok) {
         console.warn(`[numbers-fetch] erro HTTP ${res.status}`)
-        return // mantém o último estado válido conhecido
+        setFetchError(true)
+        setLoading(false)
+        return
       }
       backoffRef.current = 30_000 // sucesso: reset ao intervalo normal
       const data = await res.json()
       setTaken(data.taken)
       setStats(data.stats)
+      setFetchError(false)
+      setLoading(false)
     } catch (err) {
       console.warn('[numbers-fetch] falha de rede', err)
-    } finally {
+      setFetchError(true)
       setLoading(false)
     }
+  }
+
+  function handleRetry() {
+    backoffRef.current = 30_000
+    setFetchError(false)
+    setLoading(true)
+    fetchNumbers()
   }
 
   useEffect(() => {
@@ -227,6 +241,7 @@ export default function Home() {
 
   function getStatus(n: number): NumberStatus {
     if (selected.has(n)) return 'selected'
+    if (!taken) return 'available'
     const entry = taken[String(n)]
     if (!entry) return 'available'
     return entry.status
@@ -234,7 +249,7 @@ export default function Home() {
 
   const handleNumberClick = useCallback(
     (n: number) => {
-      if (taken[String(n)]) return
+      if (taken?.[String(n)]) return
       setSelected(prev => {
         const next = new Set(prev)
         if (next.has(n)) {
@@ -255,7 +270,7 @@ export default function Home() {
   function handleRandom() {
     const available: number[] = []
     for (let i = 1; i <= TOTAL; i++) {
-      if (!taken[String(i)]) available.push(i)
+      if (!taken?.[String(i)]) available.push(i)
     }
     if (available.length === 0) {
       showToast('Nenhum número disponível', 'error')
@@ -465,7 +480,7 @@ export default function Home() {
             }}
           >
             <div className="text-center">
-              <div className="text-3xl font-black text-white">{stats.available}</div>
+              <div className="text-3xl font-black text-white">{stats?.available ?? '—'}</div>
               <div className="text-gray-400 text-sm mt-1">Disponíveis</div>
             </div>
             <div
@@ -473,13 +488,13 @@ export default function Home() {
               style={{ borderColor: 'rgba(255,255,255,0.08)' }}
             >
               <div className="text-3xl font-black" style={{ color: 'rgb(255,140,0)' }}>
-                {stats.reserved}
+                {stats?.reserved ?? '—'}
               </div>
               <div className="text-gray-400 text-sm mt-1">Aguardando</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-black" style={{ color: '#69f0ae' }}>
-                {stats.paid}
+                {stats?.paid ?? '—'}
               </div>
               <div className="text-gray-400 text-sm mt-1">Pagos</div>
             </div>
@@ -511,6 +526,18 @@ export default function Home() {
             <div className="text-center text-gray-400 py-16">
               <div className="text-3xl mb-2">⏳</div>
               Carregando números...
+            </div>
+          ) : fetchError || stats === null ? (
+            <div className="text-center text-gray-400 py-16">
+              <div className="text-3xl mb-3">⚠️</div>
+              <div className="mb-4">Não foi possível carregar os números.</div>
+              <button
+                onClick={handleRetry}
+                className="px-6 py-2 rounded-xl font-bold text-sm"
+                style={{ background: 'rgba(255,215,0,0.15)', color: '#FFD700' }}
+              >
+                Tentar novamente
+              </button>
             </div>
           ) : (
             <div
