@@ -53,7 +53,7 @@ export function generatePixEMV(params: {
 
   let payload = ''
   payload += emvField('00', '01')           // Payload Format Indicator
-  payload += emvField('01', '12')           // Point of Initiation Method (dynamic)
+  payload += emvField('01', '11')           // Point of Initiation Method (static)
   payload += emvField('26', mai)            // Merchant Account Information
   payload += emvField('52', '0000')         // Merchant Category Code
   payload += emvField('53', '986')          // Transaction Currency (BRL)
