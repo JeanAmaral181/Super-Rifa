@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Super Rifa — Participe e Ganhe!',
+  title: 'Jean Amaral da Silva — Web Developer & Security Researcher',
   description:
-    'Participe da Super Rifa e concorra a prêmios incríveis! iPhone 15 128GB, iPhone 11 e premiações em dinheiro. Apenas R$ 15,00 por número.',
+    'Portfólio de Jean Amaral da Silva. Desenvolvedor web full-stack especializado em TypeScript, Next.js, React e segurança de aplicações (OWASP, JWT, rate limiting).',
 }
 
 export default function RootLayout({

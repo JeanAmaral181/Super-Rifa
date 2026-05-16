@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #060620;
-  --foreground: #ffffff;
+  --background: #0a0a0f;
+  --foreground: #c0c0c0;
+  --green: #00ff41;
 }
 
 @theme inline {
@@ -18,54 +19,34 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
 }
 
-@keyframes confetti-fall {
-  0% {
-    transform: translateY(-40px) rotate(0deg);
-    opacity: 1;
-  }
-  80% {
-    opacity: 0.6;
-  }
-  100% {
-    transform: translateY(110vh) rotate(720deg);
-    opacity: 0;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
-.confetti-piece {
-  position: absolute;
-  width: 8px;
-  height: 14px;
-  animation: confetti-fall linear infinite;
-  border-radius: 2px;
-  top: 0;
+.nav-link:hover {
+  color: var(--green) !important;
+  transition: color 0.2s;
 }
 
-.prize-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  cursor: default;
-}
-
-.prize-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 0 24px rgba(255, 215, 0, 0.35);
+.contact-card:hover {
+  border-color: rgba(0, 255, 65, 0.35) !important;
+  transition: border-color 0.2s;
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 215, 0, 0.3);
+  background: rgba(0, 255, 65, 0.2);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 215, 0, 0.5);
+  background: rgba(0, 255, 65, 0.4);
 }
