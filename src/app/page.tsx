@@ -83,6 +83,28 @@ export default function Home() {
   const isFetchingRef = useRef(false)
   const fetchNumbersRef = useRef<() => Promise<void>>(async () => {})
 
+  async function copyText(text: string): Promise<boolean> {
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text)
+        return true
+      } catch { /* fall through */ }
+    }
+    try {
+      const el = document.createElement('textarea')
+      el.value = text
+      el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0'
+      document.body.appendChild(el)
+      el.focus()
+      el.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(el)
+      return ok
+    } catch {
+      return false
+    }
+  }
+
   function showToast(message: string, type: Toast['type'] = 'info') {
     setToast({ message, type })
     if (toastRef.current) clearTimeout(toastRef.current)
@@ -865,11 +887,11 @@ export default function Home() {
               <div className="text-gray-400 text-sm mb-2">Código Pix — Copia e Cola</div>
               <button
                 onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(pixData.pixString)
+                  const ok = await copyText(pixData.pixString)
+                  if (ok) {
                     showToast('Código copiado!', 'success')
-                  } catch {
-                    showToast('Não foi possível copiar automaticamente — selecione e copie manualmente.', 'error')
+                  } else {
+                    showToast('Não foi possível copiar — selecione e copie manualmente.', 'error')
                   }
                 }}
                 className="w-full text-left text-xs rounded-xl p-3 break-all transition-opacity hover:opacity-80"
