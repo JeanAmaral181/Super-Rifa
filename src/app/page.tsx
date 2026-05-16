@@ -56,7 +56,7 @@ const PROJECTS = [
       'Validação Zod em todas as fronteiras de API',
       'Mutex distribuído (Redis NX) para reservas concorrentes',
     ],
-    github: 'https://github.com/JeanAmaral181',
+    github: 'https://github.com/JeanAmaral181/Super-Rifa',
     live: null,
   },
 ]
