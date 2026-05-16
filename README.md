@@ -1,57 +1,56 @@
 # Super Rifa
 
-Plataforma full-stack de rifas com geração de QR Code PIX via especificação EMV do BACEN (modo demo), estado distribuído via Redis com mutex lock, autenticação JWT e rate limiting por IP.
+Plataforma de rifas que construí pra estudar segurança em aplicações web. Tem integração com PIX no padrão EMV do Banco Central, Redis pra lidar com reservas simultâneas sem conflito, autenticação JWT e rate limiting por IP.
 
-**Demo:** [super-rifa.vercel.app](https://super-rifa.vercel.app)
+Roda em produção (modo demo) em: [super-rifa.vercel.app](https://super-rifa.vercel.app)
 
-## Stack
+## O que tem dentro
 
-- **Next.js 16** — App Router, Server Components, API Routes
-- **TypeScript** — tipagem estrita em todas as camadas
-- **Upstash Redis** — estado distribuído + mutex lock (NX)
-- **JWT + bcrypt** — autenticação admin com cookie HttpOnly
-- **Zod** — validação de schema em todas as fronteiras de API
-- **PIX/EMV** — geração de payload seguindo a especificação BACEN
-- **Vercel** — deploy contínuo
+- **Next.js 16** com App Router — API Routes e Server Components
+- **TypeScript** em tudo
+- **Upstash Redis** pra estado distribuído e mutex com `SET NX`
+- **JWT + bcrypt** pra autenticação do painel admin
+- **Zod** pra validar todas as entradas
+- **PIX/EMV** — geração de QR Code seguindo a spec do BACEN
+- **Vercel** pra deploy
 
-## Segurança
+## Segurança implementada
 
-- `bcrypt` com delay mínimo de 500 ms — defesa contra timing attack
-- Rate limiting por IP no Redis, janela configurável por rota
-- Cookie `HttpOnly + SameSite=Strict` para o token JWT admin
-- Validação Zod em todas as entradas de API
-- Mutex distribuído (Redis `SET NX`) para reservas concorrentes
+- bcrypt com delay mínimo de 500ms pra dificultar timing attack
+- Rate limiting por IP via Redis, janela configurável por rota
+- Cookie `HttpOnly + SameSite=Strict` pro JWT do admin
+- Zod em todas as bordas da API
+- Mutex distribuído pra evitar condição de corrida nas reservas
 - HMAC SHA-256 com `timingSafeEqual` no webhook PIX
-- Idempotência de eventos via Redis (TTL 7 dias)
+- Idempotência via Redis pra evitar processar o mesmo evento duas vezes
 
-## Modo Demo
+## Modo demo
 
-A integração PIX está em modo demonstrativo — o payload EMV é gerado corretamente seguindo a especificação do BACEN, mas com uma chave fictícia. Nenhum pagamento real é processado.
+O PIX gera o QR Code e o payload EMV certinho, mas com uma chave fictícia — ou seja, nenhum pagamento real acontece. É só pra mostrar a implementação.
 
-## Rodando localmente
+## Como rodar
 
 ```bash
 npm install
-cp .env.example .env   # configure as variáveis
+cp .env.example .env
+# preencha as variáveis no .env
 npm run dev
 ```
 
-Acesse [http://localhost:3000](http://localhost:3000).
+Abre em [http://localhost:3000](http://localhost:3000).
 
 ### Variáveis de ambiente
 
-| Variável | Descrição |
+| Variável | O que é |
 |---|---|
-| `UPSTASH_REDIS_REST_URL` | URL do Redis (Upstash) |
-| `UPSTASH_REDIS_REST_TOKEN` | Token do Redis (Upstash) |
-| `ADMIN_PASSWORD_HASH` | Hash bcrypt da senha admin |
-| `JWT_SECRET` | Segredo para assinar o JWT |
-| `PIX_KEY` | Chave PIX do recebedor (deixe `demo` para modo demonstrativo) |
-| `PIX_MERCHANT_NAME` | Nome do recebedor (máx. 25 chars) |
-| `PIX_MERCHANT_CITY` | Cidade do recebedor (máx. 15 chars) |
+| `UPSTASH_REDIS_REST_URL` | URL do Redis no Upstash |
+| `UPSTASH_REDIS_REST_TOKEN` | Token do Redis no Upstash |
+| `ADMIN_PASSWORD_HASH` | Hash bcrypt da senha do painel admin |
+| `JWT_SECRET` | Chave pra assinar o JWT |
+| `PIX_KEY` | Chave PIX — coloque `demo` pra rodar sem pagamento real |
+| `PIX_MERCHANT_NAME` | Nome que aparece no QR (máx. 25 caracteres) |
+| `PIX_MERCHANT_CITY` | Cidade que aparece no QR (máx. 15 caracteres) |
 
-## Painel Admin
+## Painel admin
 
-Acesse `/admin` com a senha configurada em `ADMIN_PASSWORD_HASH`.
-
-Funcionalidades: confirmar pagamentos, liberar reservas expiradas, adicionar compras manuais e realizar sorteio com commit-reveal auditável.
+Acesse `/admin` e entre com a senha do `ADMIN_PASSWORD_HASH`. De lá dá pra confirmar pagamentos, liberar reservas expiradas, adicionar compras na mão e fazer o sorteio com commit-reveal pra provar que não foi manipulado.
