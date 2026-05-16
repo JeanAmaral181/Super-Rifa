@@ -80,6 +80,8 @@ export default function Home() {
   const toastRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const backoffRef = useRef(30_000) // ms — reset to 30s on success, doubles on 429
+  const isFetchingRef = useRef(false)
+  const fetchNumbersRef = useRef<() => Promise<void>>(async () => {})
 
   function showToast(message: string, type: Toast['type'] = 'info') {
     setToast({ message, type })
@@ -87,62 +89,59 @@ export default function Home() {
     toastRef.current = setTimeout(() => setToast(null), 3500)
   }
 
-  async function fetchNumbers() {
-    try {
-      const res = await fetch('/api/numbers')
-      if (res.status === 429) {
-        // Dobra o intervalo (máx 5 min) para dar tempo à janela de rate limit (60s) expirar.
-        // Com backoff ≥ 60s a próxima tentativa SEMPRE encontra o contador zerado.
-        backoffRef.current = Math.min(backoffRef.current * 2, 5 * 60_000)
-        console.warn(`[numbers-fetch] 429 — próximo retry em ${backoffRef.current / 1000}s`)
-        setFetchError(true)
-        setLoading(false)
-        return
-      }
-      if (!res.ok) {
-        console.warn(`[numbers-fetch] erro HTTP ${res.status}`)
-        setFetchError(true)
-        setLoading(false)
-        return
-      }
-      backoffRef.current = 30_000 // sucesso: reset ao intervalo normal
-      const data = await res.json()
-      setTaken(data.taken)
-      setStats(data.stats)
-      setFetchError(false)
-      setLoading(false)
-    } catch (err) {
-      console.warn('[numbers-fetch] falha de rede', err)
-      setFetchError(true)
-      setLoading(false)
-    }
-  }
-
   function handleRetry() {
+    if (pollingRef.current) clearTimeout(pollingRef.current)
     backoffRef.current = 30_000
+    isFetchingRef.current = false
     setFetchError(false)
     setLoading(true)
-    fetchNumbers()
+    fetchNumbersRef.current()
   }
 
   useEffect(() => {
-    let active = true
+    let mounted = true
 
-    // setTimeout recursivo garante: (1) uma única chamada pendente por vez,
-    // (2) o próximo agendamento usa o backoffRef.current atualizado pelo fetch anterior,
-    // (3) cleanup no unmount cancela qualquer retry pendente.
-    async function poll() {
-      await fetchNumbers()
-      if (active) {
-        pollingRef.current = setTimeout(poll, backoffRef.current)
+    async function q() {
+      if (isFetchingRef.current) return
+      isFetchingRef.current = true
+      try {
+        const res = await fetch('/api/numbers')
+        if (res.status === 429) {
+          backoffRef.current = Math.min(backoffRef.current * 2, 5 * 60_000)
+          console.warn(`[numbers-fetch] 429 — próximo retry em ${backoffRef.current / 1000}s`)
+          setFetchError(true)
+          setLoading(false)
+        } else if (!res.ok) {
+          console.warn(`[numbers-fetch] erro HTTP ${res.status}`)
+          setFetchError(true)
+          setLoading(false)
+        } else {
+          backoffRef.current = 30_000
+          const data = await res.json()
+          setTaken(data.taken)
+          setStats(data.stats)
+          setFetchError(false)
+          setLoading(false)
+        }
+      } catch (err) {
+        console.warn('[numbers-fetch] falha de rede', err)
+        setFetchError(true)
+        setLoading(false)
+      } finally {
+        isFetchingRef.current = false
+        if (mounted) {
+          pollingRef.current = setTimeout(q, backoffRef.current)
+        }
       }
     }
 
-    poll()
+    fetchNumbersRef.current = q
+    q()
 
     return () => {
-      active = false
+      mounted = false
       if (pollingRef.current) clearTimeout(pollingRef.current)
+      isFetchingRef.current = false
     }
   }, [])
 
@@ -347,7 +346,7 @@ export default function Home() {
       setSelected(new Set())
       setBuyModal(false)
       setPixModal(true)
-      await fetchNumbers()
+      await fetchNumbersRef.current()
     } catch {
       showToast('Erro de conexão. Tente novamente.', 'error')
     } finally {
