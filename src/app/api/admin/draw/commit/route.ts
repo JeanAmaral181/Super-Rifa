@@ -1,10 +1,13 @@
 import { randomBytes, createHash } from 'node:crypto'
 import { getDrawResult, getDrawCommitment, saveDrawCommitment, saveDrawSeed } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth.server'
 
 // POST — fase 1 do commit-reveal: gera seed e publica o hash (commitment).
 // Publique o seedCommitment no Instagram/site antes de encerrar as vendas.
 // Isso prova que o vencedor não foi escolhido depois de saber quem comprou.
 export async function POST() {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
   if (await getDrawResult()) {
     return Response.json({ error: 'Sorteio já realizado — não é possível gerar novo compromisso' }, { status: 409 })
   }

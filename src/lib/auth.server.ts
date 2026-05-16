@@ -1,4 +1,5 @@
 import jwt, { type SignOptions } from 'jsonwebtoken'
+import { cookies } from 'next/headers'
 
 const JWT_SECRET = process.env.JWT_SECRET!
 
@@ -14,4 +15,14 @@ export function verifyAdminToken(token: string): boolean {
   } catch {
     return false
   }
+}
+
+/** Lê o cookie admin_token e retorna Response 401 se inválido, null se ok. */
+export async function requireAdmin(): Promise<Response | null> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('admin_token')?.value
+  if (!token || !verifyAdminToken(token)) {
+    return Response.json({ error: 'Não autorizado' }, { status: 401 })
+  }
+  return null
 }

@@ -810,9 +810,13 @@ export default function Home() {
             <div>
               <div className="text-gray-400 text-sm mb-2">Código Pix — Copia e Cola</div>
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(pixData.pixString)
-                  showToast('Código copiado!', 'success')
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(pixData.pixString)
+                    showToast('Código copiado!', 'success')
+                  } catch {
+                    showToast('Não foi possível copiar automaticamente — selecione e copie manualmente.', 'error')
+                  }
                 }}
                 className="w-full text-left text-xs rounded-xl p-3 break-all transition-opacity hover:opacity-80"
                 style={{ background: 'rgba(255,255,255,0.07)', color: '#ccc' }}

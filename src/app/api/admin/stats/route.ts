@@ -1,6 +1,9 @@
 import { getNumbers, computeStats, getExcludedTxids, EXPIRE_MS } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth.server'
 
 export async function GET() {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
   const [data, excludedTxids] = await Promise.all([getNumbers(), getExcludedTxids()])
   const stats = computeStats(data)
 

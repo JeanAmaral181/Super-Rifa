@@ -8,9 +8,13 @@ import {
   deleteDrawSeed,
   saveDrawResult,
 } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth.server'
 
 // GET — retorna sorteio já realizado e/ou compromisso gerado
 export async function GET() {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
+
   const [result, commitment] = await Promise.all([getDrawResult(), getDrawCommitment()])
   return Response.json({ result, commitment })
 }
@@ -19,6 +23,8 @@ export async function GET() {
 // Se houver commit-reveal prévio, usa seed armazenada (determinístico e auditável).
 // Caso contrário, gera seed nova com crypto.randomInt (ainda auditável).
 export async function POST() {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
   const existing = await getDrawResult()
   if (existing) {
     return Response.json({ error: 'Sorteio já realizado' }, { status: 409 })

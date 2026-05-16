@@ -1,12 +1,16 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { getNumbers, saveNumbers, withLock, EXPIRE_MS } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth.server'
 
 const schema = z.object({
   txid: z.string().min(1).max(50).optional(),
 })
 
 export async function DELETE(request: NextRequest) {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
+
   let body: unknown
   try {
     body = await request.json()

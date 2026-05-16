@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { randomBytes } from 'crypto'
 import { getNumbers, saveNumbers, autoExpire, withLock, TOTAL_NUMBERS } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth.server'
 
 const schema = z.object({
   numbers: z.string().min(1),
@@ -14,6 +15,9 @@ const schema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
+
   let body: unknown
   try {
     body = await request.json()

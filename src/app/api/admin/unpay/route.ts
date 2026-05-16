@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { getNumbers, saveNumbers, withLock, redis } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth.server'
 
 const schema = z.object({
   txid: z.string().min(1).max(50),
@@ -9,6 +10,9 @@ const schema = z.object({
 const EXCLUDED_KEY = 'rifa:draw:excluded'
 
 export async function DELETE(request: NextRequest) {
+  const authErr = await requireAdmin()
+  if (authErr) return authErr
+
   let body: unknown
   try { body = await request.json() } catch {
     return Response.json({ error: 'Requisição inválida' }, { status: 400 })
